@@ -6,7 +6,7 @@ from backend.src.services.monitor.models.url import URL
 class TestMonitor(unittest.TestCase):
     """Test class for monitor features"""
     def setUp(self) -> None:
-        urls = [URL(url="www.google.com"), URL(url="www.uxinnovation.com.br")]
+        urls = [URL(url="www.google.com"), URL(url="www.uxinnovation.com.br"), URL(url="caguei")]
         self.monitor = Monitor(urls, DatabaseMock(), {})
         super().setUp()
 

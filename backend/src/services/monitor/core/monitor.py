@@ -3,10 +3,10 @@
 from typing import List
 import requests
 import time
-from requests.exceptions import MissingSchema
+from requests.exceptions import MissingSchema, ReadTimeout, ConnectionError
 from backend.src.services.monitor.models.url import URL
 from backend.src.services.database.core.database_acessor import DatabaseAccessor
-from backend.src.services.monitor.models.monitor_record import MonitorRecord
+from backend.src.services.monitor.models.monitor_record import MonitorRecord, Status
 
 
 class Monitor:
@@ -29,14 +29,22 @@ class Monitor:
     def monitor_urls(self):
         """Monitor the URLs and store the results in the database."""
         for url in self.urls:
-            response_time = self.send_head_request(url)
-            # use time of day clock time as this is a good approximation of when the event
-            # took place 
-            datetime_measured = time.ctime().split(' ')
-            weekday_measure = datetime_measured[0]
-            date_measure = f'{datetime_measured[1]} {datetime_measured[2]} {datetime_measured[4]}'
-            time_measure = datetime_measured[3]
-            record = MonitorRecord(url=url, response_time=response_time, date=date_measure, time=time_measure, weekday=weekday_measure)
+            status = Status.ok
+            try:
+                response_time = self.send_head_request(url)
+                # use time of day clock time as this is a good approximation of when the event
+                # took place 
+                datetime_measured = time.ctime().split(' ')
+                weekday_measure = datetime_measured[0]
+                date_measure = f'{datetime_measured[1]} {datetime_measured[2]} {datetime_measured[4]}'
+                time_measure = datetime_measured[3]
+            except (ReadTimeout, ConnectionError) as exc:
+                #TODO add logging here to register that the requested timed out
+                # and the error message from the exception
+                status = Status.nok
+            record = MonitorRecord(url=url,
+                                   response_time=response_time, 
+                                   date=date_measure, time=time_measure, weekday=weekday_measure, status=status)
             self.database_accessor.store_response_time(record)
 
     def send_head_request(self, url: URL) -> float:

@@ -1,6 +1,7 @@
 """Class to model the record of a monitoring check, containing the URL and the response time."""
 
 import re
+from enum import Enum
 from typing import Annotated
 from pydantic import BaseModel, AfterValidator
 from backend.src.services.monitor.models.url import URL
@@ -52,10 +53,17 @@ def validate_weekday_format(weekday_as_str: str) -> str:
         raise ValueError(f"Weekday {weekday_as_str} is in an invalid format.")
     return weekday_as_str
 
+class Status(Enum):
+    """Enum class to determine the monitor request status"""
+    ok = 1
+    nok = 2
+
 class MonitorRecord(BaseModel):
-    """Class to model a monitoring record, grouping an URL and its response time with the measured date/time"""
+    """Class to model a monitoring record, grouping an URL and its 
+       response time with the measured date/time"""
     url: URL
     response_time: float
     date: Annotated[str, AfterValidator(validate_date_format)]
     time: Annotated[str, AfterValidator(validate_time_format)]
     weekday: Annotated[str, AfterValidator(validate_weekday_format)]
+    status: Status
