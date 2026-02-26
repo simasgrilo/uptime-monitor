@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "uptime-monitor"
+version = "0.1.0"
+description = "An uptime monitoring service application"
+authors = ["Erick <simasgrilo86@gmail.com>"]
+readme = "README.md"
+packages = [{include = "backend"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pydantic = "^2.12.5"
+fastapi = "^0.129.0"
+requests = "^2.32.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[virtualenvs]
+in-project = "True"
