@@ -2,25 +2,27 @@
 
 from typing import List
 import requests
+import time
 from requests.exceptions import MissingSchema
 from backend.src.services.monitor.models.url import URL
 from backend.src.services.database.core.database_acessor import DatabaseAccessor
+from backend.src.services.monitor.models.monitor_record import MonitorRecord
 
 
 class Monitor:
-    """Main class to monitor the URL health. This class will send HTTP HEAD requests to the services, 
-       measuring the time spent 
+    """Main class to monitor the URL health. This class will send HTTP HEAD requests to the 
+       services, measuring the time spent 
        between every request and storing it per URL as the service requirements.
     """
 
-    def __init__(self, urls: List[URL], databaseAccessor: DatabaseAccessor, configs: dict):
+    def __init__(self, urls: List[URL], database_accessor: DatabaseAccessor, configs: dict):
         """Initialize the monitor with the list of URLs to monitor.
 
         Args:
             urls (list[URL]): List of URLs to monitor.
         """
         self.urls = urls
-        self.database_accessor = databaseAccessor
+        self.database_accessor = database_accessor
         self.configs = configs
         self.default_timeout = 20
 
@@ -28,7 +30,14 @@ class Monitor:
         """Monitor the URLs and store the results in the database."""
         for url in self.urls:
             response_time = self.send_head_request(url)
-            self.database_accessor.store_response_time(url, response_time)
+            # use time of day clock time as this is a good approximation of when the event
+            # took place 
+            datetime_measured = time.ctime().split(' ')
+            weekday_measure = datetime_measured[0]
+            date_measure = f'{datetime_measured[1]} {datetime_measured[2]} {datetime_measured[4]}'
+            time_measure = datetime_measured[3]
+            record = MonitorRecord(url=url, response_time=response_time, date=date_measure, time=time_measure, weekday=weekday_measure)
+            self.database_accessor.store_response_time(record)
 
     def send_head_request(self, url: URL) -> float:
         """send a HTTP HEAD request to the given URL and return the elapsed time in seconds
